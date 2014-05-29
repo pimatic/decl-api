@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "declarative api definition for REST and real time apis",
   "main": "index.js",
+  "author": "Oliver Schneider <oliverschneider89+sweetpi@gmail.com> (http://sweetpi.de)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
   "license": "GPL",
   "dependencies": {
     "q": "~1.0.1",
