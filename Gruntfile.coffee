@@ -13,6 +13,11 @@ module.exports = (grunt) ->
         files: {
           'index.js': 'index.coffee'
         }
+      client:
+        files: {
+          'clients/decl-api-client.js': 'clients/decl-api-client.coffee'
+        }
+
   )
   # Load external Grunt task plugins.
   grunt.loadNpmTasks 'grunt-contrib-coffee'

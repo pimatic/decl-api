@@ -1,17 +1,26 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, sendErrorResponse, sendSuccessResponse, toJson, types, wrapActionResult, _;
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
+
+path = require('path');
 
 Q = require('q');
 
 _ = require('lodash');
 
 types = {
-  Any: [Number, String, Array, Date, Object]
+  number: "number",
+  string: "string",
+  array: "array",
+  date: "date",
+  object: "object"
 };
 
+types.any = [types.number, types.string, types.array, types.date, types.object];
+
 normalizeType = function(type) {
-  assert(type === Number || type === String || type === Array || type === Date || type === Object || type === "any");
+  assert(__indexOf.call(_.values(types), type) >= 0);
   return type;
 };
 
@@ -77,12 +86,8 @@ sendErrorResponse = function(res, error) {
 };
 
 callActionFromReq = function(actionName, action, binding, req) {
-  var actualParamsLength, expectedParamsLength, p, paramName, params, _ref;
-  actualParamsLength = _.keys(req.query).length + _.keys(req.params).length;
-  expectedParamsLength = _.keys(action.params).length;
-  if (!(actualParamsLength <= expectedParamsLength)) {
-    throw new Error('wrong param count');
-  }
+  var p, paramName, params, _ref;
+  assert(typeof binding[actionName] === "function");
   params = [];
   _ref = action.params;
   for (paramName in _ref) {
@@ -91,6 +96,8 @@ callActionFromReq = function(actionName, action, binding, req) {
       params.push(req.params[paramName]);
     } else if (req.query[paramName] != null) {
       params.push(req.query[paramName]);
+    } else if (req.body[paramName] != null) {
+      params.push(req.body[paramName]);
     } else if (!p.optional) {
       throw new Error("expected param: " + paramName);
     }
@@ -149,6 +156,7 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
   if (onError == null) {
     onError = null;
   }
+  assert(typeof binding[actionName] === "function");
   return Q.fcall((function(_this) {
     return function() {
       return callActionFromReq(actionName, action, binding, req);
@@ -177,7 +185,7 @@ createExpressRestApi = function(app, actions, binding, onError) {
         type = (action.rest.type || 'get').toLowerCase();
         url = action.rest.url;
         return app[type](url, function(req, res, next) {
-          return callActionFromReqAndRespond(actionName, action, binding, req, res);
+          return callActionFromReqAndRespond(actionName, action, binding, req, res, onError);
         });
       }
     };
@@ -188,6 +196,14 @@ createExpressRestApi = function(app, actions, binding, onError) {
   }
 };
 
+serveClient = function(req, res) {
+  return res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'));
+};
+
+stringifyApi = function(api) {
+  return JSON.stringify(api, null, " ");
+};
+
 module.exports = {
   types: types,
   normalizeActions: normalizeActions,
@@ -196,5 +212,7 @@ module.exports = {
   createExpressRestApi: createExpressRestApi,
   callActionFromReqAndRespond: callActionFromReqAndRespond,
   sendErrorResponse: sendErrorResponse,
-  sendSuccessResponse: sendSuccessResponse
+  sendSuccessResponse: sendSuccessResponse,
+  serveClient: serveClient,
+  stringifyApi: stringifyApi
 };

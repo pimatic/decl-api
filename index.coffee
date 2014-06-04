@@ -1,13 +1,20 @@
 assert = require 'assert'
+path = require 'path'
 Q = require 'q'
 _ = require 'lodash'
 
 types = {
-  Any: [Number, String, Array, Date, Object]
+  number: "number"
+  string: "string"
+  array: "array"
+  date: "date"
+  object: "object"
 }
+types.any = [types.number, types.string, types.array, types.date, types.object]
+
 
 normalizeType = (type) ->
-  assert type in [Number, String, Array, Date, Object, "any"]
+  assert type in _.values(types)
   return type
 
 normalizeAction = (actionName, action) -> 
@@ -50,17 +57,15 @@ sendErrorResponse = (res, error) ->
   return res.send(statusCode, {success: false, message: message})
 
 callActionFromReq = (actionName, action, binding, req) ->
-  # actual ṕaram count can be smaller because of optional arguments
-  actualParamsLength = _.keys(req.query).length + _.keys(req.params).length
-  expectedParamsLength = _.keys(action.params).length
-  unless actualParamsLength <= expectedParamsLength
-    throw new Error('wrong param count')
+  assert typeof binding[actionName] is "function"
   params = []
   for paramName, p of action.params
     if req.params[paramName]?
       params.push req.params[paramName]
     else if req.query[paramName]?
       params.push req.query[paramName]
+    else if req.body[paramName]?
+      params.push req.body[paramName]
     else unless p.optional
       throw new Error("expected param: #{paramName}")
   #console.log actionName, params, req.query
@@ -88,6 +93,7 @@ wrapActionResult = (action, result) ->
   return response
 
 callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = null) ->
+  assert typeof binding[actionName] is "function"
   return Q.fcall( => callActionFromReq(actionName, action, binding, req)
   ).then( (result) ->
     response = wrapActionResult(action, result)
@@ -104,9 +110,14 @@ createExpressRestApi = (app, actions, binding, onError = null) ->
         type = (action.rest.type or 'get').toLowerCase()
         url = action.rest.url
         app[type](url, (req, res, next) =>
-          callActionFromReqAndRespond(actionName, action, binding, req, res)
+          callActionFromReqAndRespond(actionName, action, binding, req, res, onError)
         )
   return
+
+serveClient = (req, res) ->
+  res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'))
+
+stringifyApi = (api) -> JSON.stringify(api, null, " ")
 
 module.exports = {
   types
@@ -117,4 +128,6 @@ module.exports = {
   callActionFromReqAndRespond
   sendErrorResponse
   sendSuccessResponse
+  serveClient
+  stringifyApi
 }
