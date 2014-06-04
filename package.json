@@ -5,7 +5,7 @@
   "main": "index.js",
   "files": [
     "index.js", "clients"
-  ]
+  ],
   "author": "Oliver Schneider <oliverschneider89+sweetpi@gmail.com> (http://sweetpi.de)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
