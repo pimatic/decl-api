@@ -1,11 +1,13 @@
 {
   "name": "decl-api",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "declarative api definition for REST and real time apis",
   "main": "index.js",
   "files": [
     "index.js",
+    "docs.js"
     "clients"
+    "examples"
   ],
   "author": "Oliver Schneider <oliverschneider89+sweetpi@gmail.com> (http://sweetpi.de)",
   "scripts": {
