@@ -119,6 +119,8 @@ serveClient = (req, res) ->
 
 stringifyApi = (api) -> JSON.stringify(api, null, " ")
 
+docs = -> require('./docs.js')
+
 module.exports = {
   types
   normalizeActions
@@ -130,4 +132,5 @@ module.exports = {
   sendSuccessResponse
   serveClient
   stringifyApi
+  docs
 }

@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -204,6 +204,10 @@ stringifyApi = function(api) {
   return JSON.stringify(api, null, " ");
 };
 
+docs = function() {
+  return require('./docs.js');
+};
+
 module.exports = {
   types: types,
   normalizeActions: normalizeActions,
@@ -214,5 +218,6 @@ module.exports = {
   sendErrorResponse: sendErrorResponse,
   sendSuccessResponse: sendSuccessResponse,
   serveClient: serveClient,
-  stringifyApi: stringifyApi
+  stringifyApi: stringifyApi,
+  docs: docs
 };

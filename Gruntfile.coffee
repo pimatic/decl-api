@@ -12,6 +12,8 @@ module.exports = (grunt) ->
           bare: yes
         files: {
           'index.js': 'index.coffee'
+          'docs.js': 'docs.coffee'
+          'examples/example-api.js': 'examples/example-api.coffee'
         }
       client:
         files: {
