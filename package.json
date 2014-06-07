@@ -5,8 +5,8 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "docs.js"
-    "clients"
+    "docs.js",
+    "clients",
     "examples"
   ],
   "author": "Oliver Schneider <oliverschneider89+sweetpi@gmail.com> (http://sweetpi.de)",
