@@ -36,12 +36,18 @@ api.todo = {
           type: t.object
           properties:
             description:
-              type: t.name
+              type: t.string
             done:
               type: t.boolean
+              optional: yes
       result:
         task:
           type: t.object
+          properties:
+            description:
+              type: t.string
+            done:
+              type: t.boolean
 }
 
 

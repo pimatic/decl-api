@@ -14,10 +14,11 @@ types = {
   string: "string",
   array: "array",
   date: "date",
-  object: "object"
+  object: "object",
+  boolean: "boolean"
 };
 
-types.any = [types.number, types.string, types.array, types.date, types.object];
+types.any = [types.number, types.boolean, types.string, types.array, types.date, types.object];
 
 normalizeType = function(type) {
   assert(__indexOf.call(_.values(types), type) >= 0);

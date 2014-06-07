@@ -52,17 +52,26 @@ api.todo = {
           type: t.object,
           properties: {
             description: {
-              type: t.name
+              type: t.string
             },
             done: {
-              type: t.boolean
+              type: t.boolean,
+              optional: true
             }
           }
         }
       },
       result: {
         task: {
-          type: t.object
+          type: t.object,
+          properties: {
+            description: {
+              type: t.string
+            },
+            done: {
+              type: t.boolean
+            }
+          }
         }
       }
     }
