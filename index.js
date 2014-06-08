@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, handleBooleanParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -86,21 +86,63 @@ sendErrorResponse = function(res, error) {
   });
 };
 
+handleParamType = function(paramName, param, value) {
+  var prop, propName, _ref;
+  switch (param.type) {
+    case "boolean":
+      value = handleBooleanParam(paramName, param, value);
+      break;
+    case "object":
+      if (typeof param !== "object") {
+        throw new Error("Exprected " + paramName + " to be a object, was: " + value);
+      }
+      if (param.properties != null) {
+        _ref = param.properties;
+        for (propName in _ref) {
+          prop = _ref[propName];
+          if (value[propName] != null) {
+            value[propName] = handleParamType(propName, prop, value[propName]);
+          } else {
+            if (prop.optional == null) {
+              throw new Error("Expected " + paramName + " to have an property " + propName + ".");
+            }
+          }
+        }
+      }
+  }
+  return value;
+};
+
+handleBooleanParam = function(paramName, param, value) {
+  if (typeof value === "string") {
+    if (value !== "true" && value !== "false") {
+      throw new Error("Exprected " + paramName + " to be boolean, was: " + value);
+    } else {
+      value = value === "true";
+    }
+  }
+  return value;
+};
+
 callActionFromReq = function(actionName, action, binding, req) {
-  var p, paramName, params, _ref;
+  var p, paramName, paramValue, params, pparamValue, _ref;
   assert(typeof binding[actionName] === "function");
   params = [];
   _ref = action.params;
   for (paramName in _ref) {
     p = _ref[paramName];
+    paramValue = null;
     if (req.params[paramName] != null) {
-      params.push(req.params[paramName]);
+      paramValue = req.params[paramName];
     } else if (req.query[paramName] != null) {
-      params.push(req.query[paramName]);
+      pparamValue = req.query[paramName];
     } else if (req.body[paramName] != null) {
-      params.push(req.body[paramName]);
+      paramValue = req.body[paramName];
     } else if (!p.optional) {
       throw new Error("expected param: " + paramName);
+    }
+    if (paramValue != null) {
+      params.push(handleParamType(paramName, p, paramValue));
     }
   }
   return Q.fcall((function(_this) {

@@ -57,19 +57,49 @@ sendErrorResponse = (res, error) ->
     message = error
   return res.send(statusCode, {success: false, message: message})
 
+
+handleParamType = (paramName, param, value) ->
+  switch param.type
+    when "boolean" then value = handleBooleanParam(paramName, param, value)
+    when "object"
+      unless typeof param is "object"
+        throw new Error("Exprected #{paramName} to be a object, was: #{value}")
+      if param.properties?
+        for propName, prop of param.properties
+          if value[propName]?
+            value[propName] = handleParamType(propName, prop, value[propName])
+          else
+            unless prop.optional?
+              throw new Error("Expected #{paramName} to have an property #{propName}.")
+
+  return value
+
+handleBooleanParam = (paramName, param, value) ->
+  if typeof value is "string"
+    unless value in ["true", "false"]
+      throw new Error("Exprected #{paramName} to be boolean, was: #{value}")
+    else
+      value = (value is "true")
+  return value
+
 callActionFromReq = (actionName, action, binding, req) ->
   assert typeof binding[actionName] is "function"
   params = []
   for paramName, p of action.params
+    paramValue = null
     if req.params[paramName]?
-      params.push req.params[paramName]
+      paramValue = req.params[paramName]
     else if req.query[paramName]?
-      params.push req.query[paramName]
+      pparamValue = req.query[paramName]
     else if req.body[paramName]?
-      params.push req.body[paramName]
+      paramValue = req.body[paramName]
     else unless p.optional
       throw new Error("expected param: #{paramName}")
-  #console.log actionName, params, req.query
+    if paramValue?
+      # check type
+      params.push handleParamType(paramName, p, paramValue)
+
+  #console.log actionName, params
   return Q.fcall( => binding[actionName](params...) )
 
 toJson = (result) ->
@@ -82,7 +112,6 @@ toJson = (result) ->
 
 wrapActionResult = (action, result) ->
   assert typeof action is "object"
-
   if action.result
     resultName = (key for key of action.result)[0]
     if action.result[resultName].toJson?
