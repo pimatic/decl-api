@@ -11,17 +11,15 @@
       for (actionName in _ref) {
         action = _ref[actionName];
         if (action.rest != null) {
-          this.createRestAction(actionName, action);
+          this.createRestAction(this.rest, actionName, action, action.rest);
         }
       }
     }
 
-    DeclApiClient.prototype.createRestAction = function(actionName, action) {
-      return this.rest[actionName] = ((function(_this) {
+    DeclApiClient.prototype.createRestAction = function(obj, actionName, action, rest) {
+      return obj[actionName] = ((function(_this) {
         return function(args, ajaxOptions) {
-          var data, param, paramName, regex, type, url, _ref;
-          type = action.rest.type;
-          url = action.rest.url;
+          var data, param, paramName, regex, url, _ref;
           data = {};
           _ref = action.params;
           for (paramName in _ref) {
@@ -42,8 +40,8 @@
           if (ajaxOptions == null) {
             ajaxOptions = {};
           }
-          ajaxOptions.type = type;
-          ajaxOptions.url = url;
+          ajaxOptions.type = rest.type;
+          ajaxOptions.url = rest.url;
           ajaxOptions.data = data;
           return jQuery.ajax(ajaxOptions);
         };

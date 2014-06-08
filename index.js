@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, handleBooleanParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -92,6 +92,9 @@ handleParamType = function(paramName, param, value) {
     case "boolean":
       value = handleBooleanParam(paramName, param, value);
       break;
+    case "number":
+      value = handleNumberParam(paramName, param, value);
+      break;
     case "object":
       if (typeof param !== "object") {
         throw new Error("Exprected " + paramName + " to be a object, was: " + value);
@@ -124,8 +127,21 @@ handleBooleanParam = function(paramName, param, value) {
   return value;
 };
 
+handleNumberParam = function(paramName, param, value) {
+  var numValue;
+  if (typeof value === "string") {
+    numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      throw new Error("Exprected " + paramName + " to be boolean, was: " + value);
+    } else {
+      value = numValue;
+    }
+  }
+  return value;
+};
+
 callActionFromReq = function(actionName, action, binding, req) {
-  var p, paramName, paramValue, params, pparamValue, _ref;
+  var p, paramName, paramValue, params, _ref;
   assert(typeof binding[actionName] === "function");
   params = [];
   _ref = action.params;
@@ -135,7 +151,7 @@ callActionFromReq = function(actionName, action, binding, req) {
     if (req.params[paramName] != null) {
       paramValue = req.params[paramName];
     } else if (req.query[paramName] != null) {
-      pparamValue = req.query[paramName];
+      paramValue = req.query[paramName];
     } else if (req.body[paramName] != null) {
       paramValue = req.body[paramName];
     } else if (!p.optional) {

@@ -61,6 +61,7 @@ sendErrorResponse = (res, error) ->
 handleParamType = (paramName, param, value) ->
   switch param.type
     when "boolean" then value = handleBooleanParam(paramName, param, value)
+    when "number" then value = handleNumberParam(paramName, param, value)
     when "object"
       unless typeof param is "object"
         throw new Error("Exprected #{paramName} to be a object, was: #{value}")
@@ -82,6 +83,15 @@ handleBooleanParam = (paramName, param, value) ->
       value = (value is "true")
   return value
 
+handleNumberParam = (paramName, param, value) ->
+  if typeof value is "string"
+    numValue = parseFloat(value) 
+    if isNaN(numValue)
+      throw new Error("Exprected #{paramName} to be boolean, was: #{value}")
+    else
+      value = numValue
+  return value
+
 callActionFromReq = (actionName, action, binding, req) ->
   assert typeof binding[actionName] is "function"
   params = []
@@ -90,7 +100,7 @@ callActionFromReq = (actionName, action, binding, req) ->
     if req.params[paramName]?
       paramValue = req.params[paramName]
     else if req.query[paramName]?
-      pparamValue = req.query[paramName]
+      paramValue = req.query[paramName]
     else if req.body[paramName]?
       paramValue = req.body[paramName]
     else unless p.optional
@@ -99,7 +109,6 @@ callActionFromReq = (actionName, action, binding, req) ->
       # check type
       params.push handleParamType(paramName, p, paramValue)
 
-  #console.log actionName, params
   return Q.fcall( => binding[actionName](params...) )
 
 toJson = (result) ->

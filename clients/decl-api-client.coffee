@@ -4,15 +4,12 @@ class DeclApiClient
   constructor: (@apiDef) ->
     for actionName, action of @apiDef.actions
       if action.rest?
-        @createRestAction(actionName, action)
+        @createRestAction(@rest, actionName, action, action.rest)
 
 
-  createRestAction: (actionName, action) ->
-    @rest[actionName] = ( (args, ajaxOptions) =>
-      type = action.rest.type
-      url = action.rest.url
+  createRestAction: (obj, actionName, action, rest) ->
+    obj[actionName] = ( (args, ajaxOptions) =>
       data = {}
-
       for paramName, param of action.params
         if args[paramName]?
           # test if its an url paramter
@@ -26,8 +23,8 @@ class DeclApiClient
             throw new Error("Expected param #{paramName}")
 
       unless ajaxOptions? then ajaxOptions = {}
-      ajaxOptions.type = type
-      ajaxOptions.url = url
+      ajaxOptions.type = rest.type
+      ajaxOptions.url = rest.url
       ajaxOptions.data = data
       return jQuery.ajax(ajaxOptions)
     )
