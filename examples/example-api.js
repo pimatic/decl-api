@@ -1,4 +1,4 @@
-var api, declapi, printHtmlDocs, t;
+var TodoApp, api, declapi, printHtmlDocs, t;
 
 declapi = require('../index.js');
 
@@ -75,6 +75,32 @@ api.todo = {
         }
       }
     }
+  }
+};
+
+TodoApp = {
+  tasks: [],
+  listTasks: function() {
+    return this.tasks;
+  },
+  getTask: function(taskId) {
+    var _i, _len, _ref;
+    _ref = this.tasks;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      t = _ref[_i];
+      if (t.id === taskId) {
+        return task;
+      }
+    }
+    return null;
+  },
+  addTask: function(taskId, task) {
+    if (!task.done) {
+      task.done = false;
+    }
+    task.id = taskId;
+    this.tasks.push(task);
+    return task;
   }
 };
 
