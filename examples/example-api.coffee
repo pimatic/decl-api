@@ -50,6 +50,21 @@ api.todo = {
               type: t.boolean
 }
 
+TodoApp = {
+  tasks: []
+  listTasks: -> @tasks
+  getTask: (taskId) -> 
+    for t in @tasks
+      if t.id is taskId
+        return task
+    return null
+  addTask: (taskId, task) ->
+    unless task.done then task.done = no
+    task.id = taskId
+    @tasks.push task
+    return task
+}
+
 
 printHtmlDocs = () ->
   console.log(

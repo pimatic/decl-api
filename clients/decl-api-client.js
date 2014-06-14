@@ -19,7 +19,9 @@
     DeclApiClient.prototype.createRestAction = function(obj, actionName, action, rest) {
       return obj[actionName] = ((function(_this) {
         return function(args, ajaxOptions) {
-          var data, param, paramName, regex, url, _ref;
+          var data, param, paramName, regex, type, url, _ref;
+          type = rest.type;
+          url = rest.url;
           data = {};
           _ref = action.params;
           for (paramName in _ref) {
@@ -27,7 +29,7 @@
             if (args[paramName] != null) {
               regex = new RegExp("(^|/)(\:" + paramName + ")(/|$)");
               if (regex.test(url)) {
-                url = url.replace(regex, "$1" + args[paramName] + "$3");
+                url = url.replace(regex, '$1!!!$3').replace('!!!', args[paramName]);
               } else {
                 data[paramName] = args[paramName];
               }
@@ -40,8 +42,8 @@
           if (ajaxOptions == null) {
             ajaxOptions = {};
           }
-          ajaxOptions.type = rest.type;
-          ajaxOptions.url = rest.url;
+          ajaxOptions.type = type;
+          ajaxOptions.url = url;
           ajaxOptions.data = data;
           return jQuery.ajax(ajaxOptions);
         };

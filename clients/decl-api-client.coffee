@@ -9,13 +9,17 @@ class DeclApiClient
 
   createRestAction: (obj, actionName, action, rest) ->
     obj[actionName] = ( (args, ajaxOptions) =>
+      type = rest.type
+      url = rest.url
       data = {}
       for paramName, param of action.params
         if args[paramName]?
           # test if its an url paramter
           regex = new RegExp("(^|/)(\:#{paramName})(/|$)")
           if regex.test(url)
-            url = url.replace(regex, "$1#{args[paramName]}$3");
+            # ":paramName" can't be replaced directly, because parametername could
+            # include regexp special chars, so replace by "!!!" and then by value
+            url = url.replace(regex, '$1!!!$3').replace('!!!', args[paramName])
           else
             data[paramName] = args[paramName]
         else 
@@ -23,8 +27,8 @@ class DeclApiClient
             throw new Error("Expected param #{paramName}")
 
       unless ajaxOptions? then ajaxOptions = {}
-      ajaxOptions.type = rest.type
-      ajaxOptions.url = rest.url
+      ajaxOptions.type = type
+      ajaxOptions.url = url
       ajaxOptions.data = data
       return jQuery.ajax(ajaxOptions)
     )
