@@ -110,6 +110,11 @@ genDocsForParam = (paramName, param) ->
           glueConcat((genDocsForParam(n, p) for n, p of param.properties)) +
         '</ul>'
       else ''}
+    #{if param.elements?
+      '<ul class="action-param-elements">' + 
+        glueConcat((genDocsForParam(n, p) for n, p of param.elements)) +
+      '</ul>'
+    else ''}
   </li>
   """
 
