@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, createExpressRestApi, docs, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, docs, enhanceWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -84,6 +84,78 @@ sendErrorResponse = function(res, error) {
     success: false,
     message: message
   });
+};
+
+checkConfigEntry = function(name, entry, val) {
+  switch (entry.type) {
+    case 'string':
+      if (typeof val !== "string") {
+        throw new Error("Expected " + name + " to be a string");
+      }
+      break;
+    case 'number':
+      if (typeof val !== "number") {
+        throw new Error("Expected " + name + " to be a number");
+      }
+      break;
+    case 'boolean':
+      if (typeof val !== "boolean") {
+        throw new Error("Expected " + name + " to be a boolean");
+      }
+      break;
+    case 'object':
+      if (typeof val !== "object") {
+        throw new Error("Expected " + name + " to be a object");
+      }
+      break;
+    case 'array':
+      if (!Array.isArray(val)) {
+        throw new Error("Expected " + name + " to be a array");
+      }
+  }
+};
+
+checkConfig = function(def, config, warnings) {
+  var entry, name, _results;
+  if (warnings == null) {
+    warnings = [];
+  }
+  for (name in def) {
+    entry = def[name];
+    if (config[name] != null) {
+      checkConfigEntry(name, entry, config[name]);
+    } else if (entry["default"] == null) {
+      throw new Error("Missing config entry " + name + ".");
+    }
+  }
+  _results = [];
+  for (name in config) {
+    if (def[name] == null) {
+      _results.push(warnings.push("Unknown config entry with name " + name + "."));
+    } else {
+      _results.push(void 0);
+    }
+  }
+  return _results;
+};
+
+getConfigDefaults = function(def) {
+  var defaults, entry, name;
+  defaults = {};
+  for (name in def) {
+    entry = def[name];
+    if (entry["default"] != null) {
+      defaults[name] = entry["default"];
+    }
+  }
+  return defaults;
+};
+
+enhanceWithDefaults = function(def, config) {
+  var defaults;
+  defaults = getConfigDefaults(def);
+  config.__proto__ = defaults;
+  return config;
 };
 
 handleParamType = function(paramName, param, value) {
@@ -278,5 +350,8 @@ module.exports = {
   sendSuccessResponse: sendSuccessResponse,
   serveClient: serveClient,
   stringifyApi: stringifyApi,
-  docs: docs
+  docs: docs,
+  checkConfig: checkConfig,
+  getConfigDefaults: getConfigDefaults,
+  enhanceWithDefaults: enhanceWithDefaults
 };

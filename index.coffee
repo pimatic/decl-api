@@ -57,6 +57,46 @@ sendErrorResponse = (res, error) ->
     message = error
   return res.send(statusCode, {success: false, message: message})
 
+checkConfigEntry = (name, entry, val) ->
+  switch entry.type
+    when 'string'
+      if typeof val isnt "string"
+        throw new Error("Expected #{name} to be a string")
+    when 'number'
+      if typeof val isnt "number"
+        throw new Error("Expected #{name} to be a number")
+    when 'boolean'
+      if typeof val isnt "boolean"
+        throw new Error("Expected #{name} to be a boolean")
+    when 'object'
+      if typeof val isnt "object"
+        throw new Error("Expected #{name} to be a object")
+    when 'array'
+      unless Array.isArray(val)
+        throw new Error("Expected #{name} to be a array")
+
+checkConfig = (def, config, warnings = []) ->
+  for name, entry of def
+    if config[name]?
+      checkConfigEntry(name, entry, config[name])
+    else unless entry.default?
+      throw new Error("Missing config entry #{name}.")
+  for name of config
+    unless def[name]?
+      warnings.push "Unknown config entry with name #{name}."
+
+getConfigDefaults = (def) ->
+  defaults = {}
+  for name, entry of def
+    if entry.default?
+      defaults[name] = entry.default
+  return defaults
+
+enhanceWithDefaults = (def, config) ->
+  defaults = getConfigDefaults(def)
+  config.__proto__ = defaults
+  return config
+
 
 handleParamType = (paramName, param, value) ->
   switch param.type
@@ -172,4 +212,7 @@ module.exports = {
   serveClient
   stringifyApi
   docs
+  checkConfig
+  getConfigDefaults
+  enhanceWithDefaults
 }

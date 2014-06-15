@@ -1,7 +1,7 @@
 decl-api
 ========
 
-Declarative api definition for REST and real time apis. 
+Declarative api definition for REST and real time APIs. 
 
 ##API-Definition
 
@@ -93,7 +93,7 @@ todoApp = new TodoApp()
 declapi.createExpressRestApi(app, api.todo, todoApp)
 ```
 
-##REST-APi
+##REST-API
 
 ###listTasks
 Returns the task list as json object
