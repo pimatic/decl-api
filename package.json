@@ -1,6 +1,6 @@
 {
   "name": "decl-api",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "declarative api definition for REST and real time apis",
   "main": "index.js",
   "files": [
