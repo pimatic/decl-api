@@ -193,6 +193,40 @@ createExpressRestApi = (app, actions, binding, onError = null) ->
         )
   return
 
+_socketBindings = null
+
+createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
+  socket.on('call', (call) ->
+    assert call.action? and typeof call.action is "string"
+    assert call.params? and Array.isArray call.params
+    assert( 
+      if call.id? then typeof call.id is "string" or typeof call.id is "number" else true
+    )
+    foundBinding = no
+    for [actions, binding] in actionsAndBindings
+      do (actions, binding) =>
+        action = actions[call.action]
+        if action?
+          foundBinding = yes
+          result = binding[call.action](call.params...)
+          Q(result).then( (result) =>
+            response = wrapActionResult(action, result)
+            socket.emit('callResult', {
+              id: call.id
+              success: yes
+              result: response
+            })
+          ).catch( (error) =>
+            onError(error) if onError?
+            socket.emit('callResult', {
+              id: call.id
+              success: no
+            })
+          )
+    unless foundBinding
+      onError(new Error("""Could not find action "#{call.action}".""")) if onError?
+  )
+
 serveClient = (req, res) ->
   res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'))
 
@@ -215,4 +249,5 @@ module.exports = {
   checkConfig
   getConfigDefaults
   enhanceWithDefaults
+  createSocketIoApi
 }

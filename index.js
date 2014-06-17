@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, docs, enhanceWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -327,6 +327,59 @@ createExpressRestApi = function(app, actions, binding, onError) {
   }
 };
 
+_socketBindings = null;
+
+createSocketIoApi = (function(_this) {
+  return function(socket, actionsAndBindings, onError) {
+    if (onError == null) {
+      onError = null;
+    }
+    return socket.on('call', function(call) {
+      var actions, binding, foundBinding, _fn, _i, _len, _ref;
+      assert((call.action != null) && typeof call.action === "string");
+      assert((call.params != null) && Array.isArray(call.params));
+      assert(call.id != null ? typeof call.id === "string" || typeof call.id === "number" : true);
+      foundBinding = false;
+      _fn = (function(_this) {
+        return function(actions, binding) {
+          var action, result;
+          action = actions[call.action];
+          if (action != null) {
+            foundBinding = true;
+            result = binding[call.action].apply(binding, call.params);
+            return Q(result).then(function(result) {
+              var response;
+              response = wrapActionResult(action, result);
+              return socket.emit('callResult', {
+                id: call.id,
+                success: true,
+                result: response
+              });
+            })["catch"](function(error) {
+              if (onError != null) {
+                onError(error);
+              }
+              return socket.emit('callResult', {
+                id: call.id,
+                success: false
+              });
+            });
+          }
+        };
+      })(this);
+      for (_i = 0, _len = actionsAndBindings.length; _i < _len; _i++) {
+        _ref = actionsAndBindings[_i], actions = _ref[0], binding = _ref[1];
+        _fn(actions, binding);
+      }
+      if (!foundBinding) {
+        if (onError != null) {
+          return onError(new Error("Could not find action \"" + call.action + "\"."));
+        }
+      }
+    });
+  };
+})(this);
+
 serveClient = function(req, res) {
   return res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'));
 };
@@ -353,5 +406,6 @@ module.exports = {
   docs: docs,
   checkConfig: checkConfig,
   getConfigDefaults: getConfigDefaults,
-  enhanceWithDefaults: enhanceWithDefaults
+  enhanceWithDefaults: enhanceWithDefaults,
+  createSocketIoApi: createSocketIoApi
 };
