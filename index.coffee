@@ -92,8 +92,10 @@ getConfigDefaults = (def) ->
       defaults[name] = entry.default
   return defaults
 
-enhanceWithDefaults = (def, config) ->
-  defaults = getConfigDefaults(def)
+enhanceJsonSchemaWithDefaults = (def, config) ->
+  assert def.type is "object", "Expected def to be a config schema with type \"object\""
+  assert typeof def.properties is "object"
+  defaults = getConfigDefaults(def.properties)
   config.__proto__ = defaults
   return config
 
@@ -248,6 +250,6 @@ module.exports = {
   docs
   checkConfig
   getConfigDefaults
-  enhanceWithDefaults
+  enhanceJsonSchemaWithDefaults
   createSocketIoApi
 }

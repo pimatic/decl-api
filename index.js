@@ -1,4 +1,4 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
+var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -151,9 +151,11 @@ getConfigDefaults = function(def) {
   return defaults;
 };
 
-enhanceWithDefaults = function(def, config) {
+enhanceJsonSchemaWithDefaults = function(def, config) {
   var defaults;
-  defaults = getConfigDefaults(def);
+  assert(def.type === "object", "Expected def to be a config schema with type \"object\"");
+  assert(typeof def.properties === "object");
+  defaults = getConfigDefaults(def.properties);
   config.__proto__ = defaults;
   return config;
 };
@@ -406,6 +408,6 @@ module.exports = {
   docs: docs,
   checkConfig: checkConfig,
   getConfigDefaults: getConfigDefaults,
-  enhanceWithDefaults: enhanceWithDefaults,
+  enhanceJsonSchemaWithDefaults: enhanceJsonSchemaWithDefaults,
   createSocketIoApi: createSocketIoApi
 };

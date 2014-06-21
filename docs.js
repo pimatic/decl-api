@@ -129,9 +129,9 @@ genDocsForParam = function(paramName, param) {
       _results.push(genDocsForParam(n, p));
     }
     return _results;
-  })()) + '</ul>' : '') + "\n  " + (param.elements != null ? '<ul class="action-param-elements">' + glueConcat((function() {
+  })()) + '</ul>' : '') + "\n  " + (param.items != null ? '<ul class="action-param-items">' + glueConcat((function() {
     var _ref, _results;
-    _ref = param.elements;
+    _ref = param.items;
     _results = [];
     for (n in _ref) {
       p = _ref[n];
