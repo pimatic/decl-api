@@ -85,20 +85,28 @@ checkConfig = (def, config, warnings = []) ->
     unless def[name]?
       warnings.push "Unknown config entry with name #{name}."
 
-getConfigDefaults = (def) ->
+getConfigDefaults = (def, includeObjects = yes) ->
   defaults = {}
   for name, entry of def
     if entry.default?
       defaults[name] = entry.default
+    else if includeObjects and entry.type is "object" and entry.properties?
+      defaults[name] = getConfigDefaults(entry.properties)
   return defaults
 
 enhanceJsonSchemaWithDefaults = (def, config) ->
   assert def.type is "object", "Expected def to be a config schema with type \"object\""
   assert typeof def.properties is "object"
-  defaults = getConfigDefaults(def.properties)
+  defaults = getConfigDefaults(def.properties, no)
   config.__proto__ = defaults
+  for name, entry of def.properties
+    if entry.type is "object" and entry.properties?
+      # Prevent manipulation of default object when property is changed
+      config[name] = enhanceJsonSchemaWithDefaults( entry, (config[name] or {}) )
+    else if (not config[name]?) and defaults[name]? and Array.isArray(defaults[name])
+      # Prevent manipulation of default array if array is changed
+      config[name] = _.cloneDeep(defaults[name]);
   return config
-
 
 handleParamType = (paramName, param, value) ->
   switch param.type

@@ -139,24 +139,38 @@ checkConfig = function(def, config, warnings) {
   return _results;
 };
 
-getConfigDefaults = function(def) {
+getConfigDefaults = function(def, includeObjects) {
   var defaults, entry, name;
+  if (includeObjects == null) {
+    includeObjects = true;
+  }
   defaults = {};
   for (name in def) {
     entry = def[name];
     if (entry["default"] != null) {
       defaults[name] = entry["default"];
+    } else if (includeObjects && entry.type === "object" && (entry.properties != null)) {
+      defaults[name] = getConfigDefaults(entry.properties);
     }
   }
   return defaults;
 };
 
 enhanceJsonSchemaWithDefaults = function(def, config) {
-  var defaults;
+  var defaults, entry, name, _ref;
   assert(def.type === "object", "Expected def to be a config schema with type \"object\"");
   assert(typeof def.properties === "object");
-  defaults = getConfigDefaults(def.properties);
+  defaults = getConfigDefaults(def.properties, false);
   config.__proto__ = defaults;
+  _ref = def.properties;
+  for (name in _ref) {
+    entry = _ref[name];
+    if (entry.type === "object" && (entry.properties != null)) {
+      config[name] = enhanceJsonSchemaWithDefaults(entry, config[name] || {});
+    } else if ((config[name] == null) && (defaults[name] != null) && Array.isArray(defaults[name])) {
+      config[name] = _.cloneDeep(defaults[name]);
+    }
+  }
   return config;
 };
 
