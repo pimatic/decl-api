@@ -98,7 +98,6 @@ enhanceJsonSchemaWithDefaults = (def, config) ->
   assert def.type is "object", "Expected def to be a config schema with type \"object\""
   assert typeof def.properties is "object"
   defaults = getConfigDefaults(def.properties, no)
-  config.__proto__ = defaults
   for name, entry of def.properties
     if entry.type is "object" and entry.properties?
       # Prevent manipulation of default object when property is changed
@@ -106,6 +105,7 @@ enhanceJsonSchemaWithDefaults = (def, config) ->
     else if (not config[name]?) and defaults[name]? and Array.isArray(defaults[name])
       # Prevent manipulation of default array if array is changed
       config[name] = _.cloneDeep(defaults[name]);
+  config.__proto__ = defaults
   return config
 
 handleParamType = (paramName, param, value) ->

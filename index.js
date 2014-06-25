@@ -161,7 +161,6 @@ enhanceJsonSchemaWithDefaults = function(def, config) {
   assert(def.type === "object", "Expected def to be a config schema with type \"object\"");
   assert(typeof def.properties === "object");
   defaults = getConfigDefaults(def.properties, false);
-  config.__proto__ = defaults;
   _ref = def.properties;
   for (name in _ref) {
     entry = _ref[name];
@@ -171,6 +170,7 @@ enhanceJsonSchemaWithDefaults = function(def, config) {
       config[name] = _.cloneDeep(defaults[name]);
     }
   }
+  config.__proto__ = defaults;
   return config;
 };
 
