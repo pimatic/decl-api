@@ -208,7 +208,7 @@ _socketBindings = null
 createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
   socket.on('call', (call) ->
     assert call.action? and typeof call.action is "string"
-    assert call.params? and Array.isArray call.params
+    assert call.params? and typeof call.params is "object"
     assert( 
       if call.id? then typeof call.id is "string" or typeof call.id is "number" else true
     )
@@ -218,7 +218,17 @@ createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
         action = actions[call.action]
         if action?
           foundBinding = yes
-          result = binding[call.action](call.params...)
+          params = []
+          for paramName, p of action.params
+            paramValue = null
+            if call.params[paramName]?
+              paramValue = call.params[paramName]
+            else unless p.optional
+              throw new Error("expected param: #{paramName}")
+            if paramValue?
+              # check type
+              params.push handleParamType(paramName, p, paramValue)
+          result = binding[call.action](params...)
           Q(result).then( (result) =>
             response = wrapActionResult(action, result)
             socket.emit('callResult', {

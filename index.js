@@ -353,16 +353,30 @@ createSocketIoApi = (function(_this) {
     return socket.on('call', function(call) {
       var actions, binding, foundBinding, _fn, _i, _len, _ref;
       assert((call.action != null) && typeof call.action === "string");
-      assert((call.params != null) && Array.isArray(call.params));
+      assert((call.params != null) && typeof call.params === "object");
       assert(call.id != null ? typeof call.id === "string" || typeof call.id === "number" : true);
       foundBinding = false;
       _fn = (function(_this) {
         return function(actions, binding) {
-          var action, result;
+          var action, p, paramName, paramValue, params, result, _ref;
           action = actions[call.action];
           if (action != null) {
             foundBinding = true;
-            result = binding[call.action].apply(binding, call.params);
+            params = [];
+            _ref = action.params;
+            for (paramName in _ref) {
+              p = _ref[paramName];
+              paramValue = null;
+              if (call.params[paramName] != null) {
+                paramValue = call.params[paramName];
+              } else if (!p.optional) {
+                throw new Error("expected param: " + paramName);
+              }
+              if (paramValue != null) {
+                params.push(handleParamType(paramName, p, paramValue));
+              }
+            }
+            result = binding[call.action].apply(binding, params);
             return Q(result).then(function(result) {
               var response;
               response = wrapActionResult(action, result);
