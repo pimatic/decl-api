@@ -1,6 +1,6 @@
 assert = require 'assert'
 path = require 'path'
-Q = require 'q'
+Promise = require 'bluebird'
 _ = require 'lodash'
 
 types = {
@@ -159,7 +159,7 @@ callActionFromReq = (actionName, action, binding, req) ->
       # check type
       params.push handleParamType(paramName, p, paramValue)
 
-  return Q.fcall( => binding[actionName](params...) )
+  return Promise.try( => binding[actionName](params...) )
 
 toJson = (result) ->
   if Array.isArray result
@@ -183,7 +183,7 @@ wrapActionResult = (action, result) ->
 
 callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = null) ->
   assert typeof binding[actionName] is "function"
-  return Q.fcall( => callActionFromReq(actionName, action, binding, req)
+  return Promise.try( => callActionFromReq(actionName, action, binding, req)
   ).then( (result) ->
     response = wrapActionResult(action, result)
     sendSuccessResponse res, response
@@ -229,7 +229,7 @@ createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
               # check type
               params.push handleParamType(paramName, p, paramValue)
           result = binding[call.action](params...)
-          Q(result).then( (result) =>
+          Promise.resolve(result).then( (result) =>
             response = wrapActionResult(action, result)
             socket.emit('callResult', {
               id: call.id

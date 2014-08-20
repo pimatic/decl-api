@@ -1,11 +1,11 @@
-var Q, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
+var Promise, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
 
 path = require('path');
 
-Q = require('q');
+Promise = require('bluebird');
 
 _ = require('lodash');
 
@@ -249,7 +249,7 @@ callActionFromReq = function(actionName, action, binding, req) {
       params.push(handleParamType(paramName, p, paramValue));
     }
   }
-  return Q.fcall((function(_this) {
+  return Promise["try"]((function(_this) {
     return function() {
       return binding[actionName].apply(binding, params);
     };
@@ -304,7 +304,7 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
     onError = null;
   }
   assert(typeof binding[actionName] === "function");
-  return Q.fcall((function(_this) {
+  return Promise["try"]((function(_this) {
     return function() {
       return callActionFromReq(actionName, action, binding, req);
     };
@@ -377,7 +377,7 @@ createSocketIoApi = (function(_this) {
               }
             }
             result = binding[call.action].apply(binding, params);
-            return Q(result).then(function(result) {
+            return Promise.resolve(result).then(function(result) {
               var response;
               response = wrapActionResult(action, result);
               return socket.emit('callResult', {
