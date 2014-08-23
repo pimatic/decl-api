@@ -87,7 +87,7 @@ genDocsForAction = function(actionName, action) {
   var name, result;
   assert(typeof actionName === "string");
   assert(typeof action === "object");
-  assert(action.description != null);
+  assert(action.description != null, action.name);
   result = ((action.result != null) && _.keys(action.result).length > 0 ? (name = _.keys(action.result)[0], {
     name: name,
     info: action.result[name]
