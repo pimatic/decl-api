@@ -346,9 +346,12 @@ createExpressRestApi = function(app, actions, binding, onError) {
 _socketBindings = null;
 
 createSocketIoApi = (function(_this) {
-  return function(socket, actionsAndBindings, onError) {
+  return function(socket, actionsAndBindings, onError, checkPermissions) {
     if (onError == null) {
       onError = null;
+    }
+    if (checkPermissions == null) {
+      checkPermissions = null;
     }
     return socket.on('call', function(call) {
       var actions, binding, foundBinding, _fn, _i, _len, _ref;
@@ -358,7 +361,7 @@ createSocketIoApi = (function(_this) {
       foundBinding = false;
       _fn = (function(_this) {
         return function(actions, binding) {
-          var action, p, paramName, paramValue, params, result, _ref;
+          var action, hasPermissions, p, paramName, paramValue, params, result, _ref;
           action = actions[call.action];
           if (action != null) {
             foundBinding = true;
@@ -376,24 +379,37 @@ createSocketIoApi = (function(_this) {
                 params.push(handleParamType(paramName, p, paramValue));
               }
             }
-            result = binding[call.action].apply(binding, params);
-            return Promise.resolve(result).then(function(result) {
-              var response;
-              response = wrapActionResult(action, result);
-              return socket.emit('callResult', {
-                id: call.id,
-                success: true,
-                result: response
+            if (checkPermissions != null) {
+              hasPermissions = checkPermissions(socket, action);
+            } else {
+              hasPermissions = true;
+            }
+            if (hasPermissions) {
+              result = binding[call.action].apply(binding, params);
+              return Promise.resolve(result).then(function(result) {
+                var response;
+                response = wrapActionResult(action, result);
+                return socket.emit('callResult', {
+                  id: call.id,
+                  success: true,
+                  result: response
+                });
+              })["catch"](function(error) {
+                if (onError != null) {
+                  onError(error);
+                }
+                return socket.emit('callResult', {
+                  id: call.id,
+                  success: false
+                });
               });
-            })["catch"](function(error) {
-              if (onError != null) {
-                onError(error);
-              }
+            } else {
               return socket.emit('callResult', {
                 id: call.id,
+                error: "permission denied",
                 success: false
               });
-            });
+            }
           }
         };
       })(this);

@@ -205,7 +205,7 @@ createExpressRestApi = (app, actions, binding, onError = null) ->
 
 _socketBindings = null
 
-createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
+createSocketIoApi = (socket, actionsAndBindings, onError = null, checkPermissions = null) =>
   socket.on('call', (call) ->
     assert call.action? and typeof call.action is "string"
     assert call.params? and typeof call.params is "object"
@@ -228,21 +228,32 @@ createSocketIoApi = (socket, actionsAndBindings, onError = null) =>
             if paramValue?
               # check type
               params.push handleParamType(paramName, p, paramValue)
-          result = binding[call.action](params...)
-          Promise.resolve(result).then( (result) =>
-            response = wrapActionResult(action, result)
+          if checkPermissions?
+            hasPermissions = checkPermissions(socket, action)
+          else
+            hasPermissions = yes
+          if hasPermissions
+            result = binding[call.action](params...)
+            Promise.resolve(result).then( (result) =>
+              response = wrapActionResult(action, result)
+              socket.emit('callResult', {
+                id: call.id
+                success: yes
+                result: response
+              })
+            ).catch( (error) =>
+              onError(error) if onError?
+              socket.emit('callResult', {
+                id: call.id
+                success: no
+              })
+            )
+          else
             socket.emit('callResult', {
               id: call.id
-              success: yes
-              result: response
-            })
-          ).catch( (error) =>
-            onError(error) if onError?
-            socket.emit('callResult', {
-              id: call.id
+              error: "permission denied"
               success: no
             })
-          )
     unless foundBinding
       onError(new Error("""Could not find action "#{call.action}".""")) if onError?
   )
