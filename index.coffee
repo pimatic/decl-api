@@ -79,7 +79,7 @@ checkConfig = (def, config, warnings = []) ->
   for name, entry of def
     if config[name]?
       checkConfigEntry(name, entry, config[name])
-    else unless entry.default?
+    else if (not entry.default?) and not (entry.required is false)
       throw new Error("Missing config entry #{name}.")
   for name of config
     unless def[name]?

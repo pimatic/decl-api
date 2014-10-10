@@ -124,7 +124,7 @@ checkConfig = function(def, config, warnings) {
     entry = def[name];
     if (config[name] != null) {
       checkConfigEntry(name, entry, config[name]);
-    } else if (entry["default"] == null) {
+    } else if ((entry["default"] == null) && !(entry.required === false)) {
       throw new Error("Missing config entry " + name + ".");
     }
   }
