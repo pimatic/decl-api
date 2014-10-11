@@ -19,7 +19,7 @@
     DeclApiClient.prototype.createRestAction = function(obj, actionName, action, rest) {
       return obj[actionName] = ((function(_this) {
         return function(args, ajaxOptions) {
-          var data, param, paramName, regex, type, url, _ref;
+          var data, json, param, paramName, regex, type, url, _ref, _ref1;
           type = rest.type;
           url = rest.url;
           data = {};
@@ -39,12 +39,17 @@
               }
             }
           }
+          json = ((_ref1 = type.toLowerCase()) === "post" || _ref1 === "patch");
           if (ajaxOptions == null) {
             ajaxOptions = {};
           }
           ajaxOptions.type = type;
           ajaxOptions.url = url;
-          ajaxOptions.data = data;
+          ajaxOptions.data = json ? JSON.stringify(data) : data;
+          if (json) {
+            ajaxOptions.contentType = "application/json; charset=utf-8";
+            ajaxOptions.dataType = "json";
+          }
           return jQuery.ajax(ajaxOptions);
         };
       })(this));

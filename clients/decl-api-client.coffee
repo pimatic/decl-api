@@ -26,10 +26,14 @@ class DeclApiClient
           unless param.optional
             throw new Error("Expected param #{paramName}")
 
+      json = (type.toLowerCase() in ["post", "patch"])
       unless ajaxOptions? then ajaxOptions = {}
       ajaxOptions.type = type
       ajaxOptions.url = url
-      ajaxOptions.data = data
+      ajaxOptions.data = if json then JSON.stringify(data) else data
+      if json
+        ajaxOptions.contentType = "application/json; charset=utf-8"
+        ajaxOptions.dataType = "json"
       return jQuery.ajax(ajaxOptions)
     )
 
