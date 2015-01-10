@@ -1,4 +1,4 @@
-var Promise, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
+var Promise, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -63,12 +63,19 @@ normalizeActions = function(actions) {
   return actions;
 };
 
+sendResponse = function(res, statusCode, data) {
+  res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.header("Pragma", "no-cache");
+  res.header("Expires", 0);
+  return res.send(statusCode, data);
+};
+
 sendSuccessResponse = function(res, data) {
   if (data == null) {
     data = {};
   }
   data.success = true;
-  return res.send(200, data);
+  return sendResponse(res, 200, data);
 };
 
 sendErrorResponse = function(res, error) {
@@ -80,7 +87,7 @@ sendErrorResponse = function(res, error) {
   } else {
     message = error;
   }
-  return res.send(statusCode, {
+  return sendResponse(res, statusCode, {
     success: false,
     message: message
   });

@@ -44,9 +44,15 @@ normalizeActions = (actions) ->
     normalizeAction(actionName, action)
   return actions
 
+sendResponse = (res, statusCode, data) ->
+  res.header("Cache-Control", "no-cache, no-store, must-revalidate")
+  res.header("Pragma", "no-cache")
+  res.header("Expires", 0) 
+  return res.send(statusCode, data)
+
 sendSuccessResponse = (res, data = {}) ->
   data.success = true
-  return res.send(200, data)
+  return sendResponse(res, 200, data)
 
 sendErrorResponse = (res, error) ->
   statusCode = 400
@@ -55,7 +61,7 @@ sendErrorResponse = (res, error) ->
     message = error.message
   else
     message = error
-  return res.send(statusCode, {success: false, message: message})
+  return sendResponse(res, statusCode, {success: false, message: message})
 
 checkConfigEntry = (name, entry, val) ->
   switch entry.type
