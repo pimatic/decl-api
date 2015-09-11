@@ -148,8 +148,7 @@ handleNumberParam = (paramName, param, value) ->
       value = numValue
   return value
 
-callActionFromReq = (actionName, action, binding, req) ->
-  assert typeof binding[actionName] is "function"
+callActionFromReq = (actionName, action, binding, req, res) ->
   params = []
   for paramName, p of action.params
     paramValue = null
@@ -165,7 +164,34 @@ callActionFromReq = (actionName, action, binding, req) ->
       # check type
       params.push handleParamType(paramName, p, paramValue)
 
-  return Promise.try( => binding[actionName](params...) )
+  handler = action.rest?.handler
+  unless handler?
+    assert typeof binding[actionName] is "function"
+    return Promise.try( => binding[actionName](params...) )
+  else
+    assert typeof binding[handler] is "function"
+    return Promise.try( => binding[handler](params, req) )
+
+callActionFromSocket = (binding, action, call) ->
+  actionName = call.action
+  params = []
+  for paramName, p of action.params
+    paramValue = null
+    if call.params[paramName]?
+      paramValue = call.params[paramName]
+    else unless p.optional
+      throw new Error("expected param: #{paramName}")
+    if paramValue?
+      # check type
+      params.push handleParamType(paramName, p, paramValue)
+
+  handler = action.socket?.handler
+  unless handler?
+    assert typeof binding[actionName] is "function"
+    return Promise.try( => binding[actionName](params...) )
+  else
+    assert typeof binding[handler] is "function"
+    return Promise.try( => binding[handler](params, call) )
 
 toJson = (result) ->
   if Array.isArray result
@@ -188,7 +214,6 @@ wrapActionResult = (action, result) ->
   return response
 
 callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = null) ->
-  assert typeof binding[actionName] is "function"
   return Promise.try( => callActionFromReq(actionName, action, binding, req)
   ).then( (result) ->
     response = wrapActionResult(action, result)
@@ -197,6 +222,36 @@ callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = 
     onError(error) if onError?
     sendErrorResponse res, error
   ).done()
+
+callActionFromSocketAndRespond = (socket, binding, action, call, checkPermissions) ->
+  if checkPermissions?
+    hasPermissions = checkPermissions(socket, action)
+  else
+    hasPermissions = yes
+  if hasPermissions
+    result = callActionFromSocket(binding, action, call)
+    Promise.resolve(result).then( (result) =>
+      response = wrapActionResult(action, result)
+      socket.emit('callResult', {
+        id: call.id
+        success: yes
+        result: response
+      })
+    ).catch( (error) =>
+      console.log(error.stack)
+      onError(error) if onError?
+      socket.emit('callResult', {
+        id: call.id
+        success: no
+        error: error.message
+      })
+    )
+  else
+    socket.emit('callResult', {
+      id: call.id
+      error: "permission denied"
+      success: no
+    })
 
 createExpressRestApi = (app, actions, binding, onError = null) ->
   for actionName, action of actions
@@ -224,42 +279,7 @@ createSocketIoApi = (socket, actionsAndBindings, onError = null, checkPermission
         action = actions[call.action]
         if action?
           foundBinding = yes
-          params = []
-          for paramName, p of action.params
-            paramValue = null
-            if call.params[paramName]?
-              paramValue = call.params[paramName]
-            else unless p.optional
-              throw new Error("expected param: #{paramName}")
-            if paramValue?
-              # check type
-              params.push handleParamType(paramName, p, paramValue)
-          if checkPermissions?
-            hasPermissions = checkPermissions(socket, action)
-          else
-            hasPermissions = yes
-          if hasPermissions
-            result = binding[call.action](params...)
-            Promise.resolve(result).then( (result) =>
-              response = wrapActionResult(action, result)
-              socket.emit('callResult', {
-                id: call.id
-                success: yes
-                result: response
-              })
-            ).catch( (error) =>
-              onError(error) if onError?
-              socket.emit('callResult', {
-                id: call.id
-                success: no
-              })
-            )
-          else
-            socket.emit('callResult', {
-              id: call.id
-              error: "permission denied"
-              success: no
-            })
+          callActionFromSocketAndRespond(socket, binding, action, call, checkPermissions)
     unless foundBinding
       onError(new Error("""Could not find action "#{call.action}".""")) if onError?
   )
@@ -278,6 +298,8 @@ module.exports = {
   wrapActionResult
   createExpressRestApi
   callActionFromReqAndRespond
+  callActionFromSocketAndRespond
+  callActionFromSocket
   sendErrorResponse
   sendSuccessResponse
   serveClient

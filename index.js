@@ -1,4 +1,4 @@
-var Promise, assert, callActionFromReq, callActionFromReqAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
+var Promise, assert, callActionFromReq, callActionFromReqAndRespond, callActionFromSocket, callActionFromSocketAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
@@ -235,9 +235,8 @@ handleNumberParam = function(paramName, param, value) {
   return value;
 };
 
-callActionFromReq = function(actionName, action, binding, req) {
-  var p, paramName, paramValue, params, _ref;
-  assert(typeof binding[actionName] === "function");
+callActionFromReq = function(actionName, action, binding, req, res) {
+  var handler, p, paramName, paramValue, params, _ref, _ref1;
   params = [];
   _ref = action.params;
   for (paramName in _ref) {
@@ -256,11 +255,57 @@ callActionFromReq = function(actionName, action, binding, req) {
       params.push(handleParamType(paramName, p, paramValue));
     }
   }
-  return Promise["try"]((function(_this) {
-    return function() {
-      return binding[actionName].apply(binding, params);
-    };
-  })(this));
+  handler = (_ref1 = action.rest) != null ? _ref1.handler : void 0;
+  if (handler == null) {
+    assert(typeof binding[actionName] === "function");
+    return Promise["try"]((function(_this) {
+      return function() {
+        return binding[actionName].apply(binding, params);
+      };
+    })(this));
+  } else {
+    assert(typeof binding[handler] === "function");
+    return Promise["try"]((function(_this) {
+      return function() {
+        return binding[handler](params, req);
+      };
+    })(this));
+  }
+};
+
+callActionFromSocket = function(binding, action, call) {
+  var actionName, handler, p, paramName, paramValue, params, _ref, _ref1;
+  actionName = call.action;
+  params = [];
+  _ref = action.params;
+  for (paramName in _ref) {
+    p = _ref[paramName];
+    paramValue = null;
+    if (call.params[paramName] != null) {
+      paramValue = call.params[paramName];
+    } else if (!p.optional) {
+      throw new Error("expected param: " + paramName);
+    }
+    if (paramValue != null) {
+      params.push(handleParamType(paramName, p, paramValue));
+    }
+  }
+  handler = (_ref1 = action.socket) != null ? _ref1.handler : void 0;
+  if (handler == null) {
+    assert(typeof binding[actionName] === "function");
+    return Promise["try"]((function(_this) {
+      return function() {
+        return binding[actionName].apply(binding, params);
+      };
+    })(this));
+  } else {
+    assert(typeof binding[handler] === "function");
+    return Promise["try"]((function(_this) {
+      return function() {
+        return binding[handler](params, call);
+      };
+    })(this));
+  }
 };
 
 toJson = function(result) {
@@ -310,7 +355,6 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
   if (onError == null) {
     onError = null;
   }
-  assert(typeof binding[actionName] === "function");
   return Promise["try"]((function(_this) {
     return function() {
       return callActionFromReq(actionName, action, binding, req);
@@ -325,6 +369,47 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
     }
     return sendErrorResponse(res, error);
   }).done();
+};
+
+callActionFromSocketAndRespond = function(socket, binding, action, call, checkPermissions) {
+  var hasPermissions, result;
+  if (checkPermissions != null) {
+    hasPermissions = checkPermissions(socket, action);
+  } else {
+    hasPermissions = true;
+  }
+  if (hasPermissions) {
+    result = callActionFromSocket(binding, action, call);
+    return Promise.resolve(result).then((function(_this) {
+      return function(result) {
+        var response;
+        response = wrapActionResult(action, result);
+        return socket.emit('callResult', {
+          id: call.id,
+          success: true,
+          result: response
+        });
+      };
+    })(this))["catch"]((function(_this) {
+      return function(error) {
+        console.log(error.stack);
+        if (typeof onError !== "undefined" && onError !== null) {
+          onError(error);
+        }
+        return socket.emit('callResult', {
+          id: call.id,
+          success: false,
+          error: error.message
+        });
+      };
+    })(this));
+  } else {
+    return socket.emit('callResult', {
+      id: call.id,
+      error: "permission denied",
+      success: false
+    });
+  }
 };
 
 createExpressRestApi = function(app, actions, binding, onError) {
@@ -368,55 +453,11 @@ createSocketIoApi = (function(_this) {
       foundBinding = false;
       _fn = (function(_this) {
         return function(actions, binding) {
-          var action, hasPermissions, p, paramName, paramValue, params, result, _ref;
+          var action;
           action = actions[call.action];
           if (action != null) {
             foundBinding = true;
-            params = [];
-            _ref = action.params;
-            for (paramName in _ref) {
-              p = _ref[paramName];
-              paramValue = null;
-              if (call.params[paramName] != null) {
-                paramValue = call.params[paramName];
-              } else if (!p.optional) {
-                throw new Error("expected param: " + paramName);
-              }
-              if (paramValue != null) {
-                params.push(handleParamType(paramName, p, paramValue));
-              }
-            }
-            if (checkPermissions != null) {
-              hasPermissions = checkPermissions(socket, action);
-            } else {
-              hasPermissions = true;
-            }
-            if (hasPermissions) {
-              result = binding[call.action].apply(binding, params);
-              return Promise.resolve(result).then(function(result) {
-                var response;
-                response = wrapActionResult(action, result);
-                return socket.emit('callResult', {
-                  id: call.id,
-                  success: true,
-                  result: response
-                });
-              })["catch"](function(error) {
-                if (onError != null) {
-                  onError(error);
-                }
-                return socket.emit('callResult', {
-                  id: call.id,
-                  success: false
-                });
-              });
-            } else {
-              return socket.emit('callResult', {
-                id: call.id,
-                error: "permission denied",
-                success: false
-              });
-            }
+            return callActionFromSocketAndRespond(socket, binding, action, call, checkPermissions);
           }
         };
       })(this);
@@ -452,6 +493,8 @@ module.exports = {
   wrapActionResult: wrapActionResult,
   createExpressRestApi: createExpressRestApi,
   callActionFromReqAndRespond: callActionFromReqAndRespond,
+  callActionFromSocketAndRespond: callActionFromSocketAndRespond,
+  callActionFromSocket: callActionFromSocket,
   sendErrorResponse: sendErrorResponse,
   sendSuccessResponse: sendSuccessResponse,
   serveClient: serveClient,
