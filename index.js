@@ -360,8 +360,14 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
       return callActionFromReq(actionName, action, binding, req);
     };
   })(this)).then(function(result) {
-    var response;
-    response = wrapActionResult(action, result);
+    var e, response;
+    response = null;
+    try {
+      response = wrapActionResult(action, result);
+    } catch (_error) {
+      e = _error;
+      throw new Error("Error on handling the result of " + actionName + ": " + e.message);
+    }
     return sendSuccessResponse(res, response);
   })["catch"](function(error) {
     if (onError != null) {
@@ -382,8 +388,14 @@ callActionFromSocketAndRespond = function(socket, binding, action, call, checkPe
     result = callActionFromSocket(binding, action, call);
     return Promise.resolve(result).then((function(_this) {
       return function(result) {
-        var response;
-        response = wrapActionResult(action, result);
+        var e, response;
+        response = null;
+        try {
+          response = wrapActionResult(action, result);
+        } catch (_error) {
+          e = _error;
+          throw new Error("Error on handling the result of " + call.action + ": " + e.message);
+        }
         return socket.emit('callResult', {
           id: call.id,
           success: true,
@@ -392,7 +404,6 @@ callActionFromSocketAndRespond = function(socket, binding, action, call, checkPe
       };
     })(this))["catch"]((function(_this) {
       return function(error) {
-        console.log(error.stack);
         if (typeof onError !== "undefined" && onError !== null) {
           onError(error);
         }

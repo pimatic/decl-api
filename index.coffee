@@ -216,7 +216,11 @@ wrapActionResult = (action, result) ->
 callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = null) ->
   return Promise.try( => callActionFromReq(actionName, action, binding, req)
   ).then( (result) ->
-    response = wrapActionResult(action, result)
+    response = null
+    try
+      response = wrapActionResult(action, result)
+    catch e
+      throw new Error("Error on handling the result of #{actionName}: #{e.message}")
     sendSuccessResponse res, response
   ).catch( (error) ->
     onError(error) if onError?
@@ -231,14 +235,17 @@ callActionFromSocketAndRespond = (socket, binding, action, call, checkPermission
   if hasPermissions
     result = callActionFromSocket(binding, action, call)
     Promise.resolve(result).then( (result) =>
-      response = wrapActionResult(action, result)
+      response = null
+      try
+        response = wrapActionResult(action, result)
+      catch e
+        throw new Error("Error on handling the result of #{call.action}: #{e.message}")
       socket.emit('callResult', {
         id: call.id
         success: yes
         result: response
       })
     ).catch( (error) =>
-      console.log(error.stack)
       onError(error) if onError?
       socket.emit('callResult', {
         id: call.id
