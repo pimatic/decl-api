@@ -321,7 +321,7 @@ toJson = function(result) {
       return _results;
     })();
   } else if (typeof result === "object") {
-    if (result.toJson != null) {
+    if ((result != null ? result.toJson : void 0) != null) {
       return result.toJson();
     }
   }

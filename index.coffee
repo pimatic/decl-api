@@ -197,7 +197,7 @@ toJson = (result) ->
   if Array.isArray result
     return (toJson(e) for e, i in result)
   else if typeof result is "object"
-    if result.toJson?
+    if result?.toJson?
       return result.toJson()
   return result
 
