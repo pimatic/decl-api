@@ -47,15 +47,14 @@ normalizeActions = (actions) ->
 sendResponse = (res, statusCode, data) ->
   res.header("Cache-Control", "no-cache, no-store, must-revalidate")
   res.header("Pragma", "no-cache")
-  res.header("Expires", 0) 
-  return res.send(statusCode, data)
+  res.header("Expires", 0)
+  return res.status(statusCode).send(data)
 
 sendSuccessResponse = (res, data = {}) ->
   data.success = true
   return sendResponse(res, 200, data)
 
-sendErrorResponse = (res, error) ->
-  statusCode = 400
+sendErrorResponse = (res, error, statusCode = 400) ->
   message = null
   if error instanceof Error
     message = error.message
@@ -209,7 +208,6 @@ wrapActionResult = (action, result) ->
       result = toJson(result)
   else
     resultName = "result"
-
   response = {}; response[resultName] = result
   return response
 
@@ -218,6 +216,8 @@ callActionFromReqAndRespond = (actionName, action, binding, req, res, onError = 
   ).then( (result) ->
     response = null
     try
+      if action.result? and !result?
+        return sendErrorResponse(res, "Not Found", 404)
       response = wrapActionResult(action, result)
     catch e
       throw new Error("Error on handling the result of #{actionName}: #{e.message}")
@@ -292,7 +292,7 @@ createSocketIoApi = (socket, actionsAndBindings, onError = null, checkPermission
   )
 
 serveClient = (req, res) ->
-  res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'))
+  res.sendFile(path.resolve(__dirname, 'clients/decl-api-client.js'))
 
 stringifyApi = (api) -> JSON.stringify(api, null, " ")
 
