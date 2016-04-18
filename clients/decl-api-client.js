@@ -5,11 +5,11 @@
     DeclApiClient.prototype.rest = {};
 
     function DeclApiClient(apiDef) {
-      var action, actionName, _ref;
+      var action, actionName, ref;
       this.apiDef = apiDef;
-      _ref = this.apiDef.actions;
-      for (actionName in _ref) {
-        action = _ref[actionName];
+      ref = this.apiDef.actions;
+      for (actionName in ref) {
+        action = ref[actionName];
         if (action.rest != null) {
           this.createRestAction(this.rest, actionName, action, action.rest);
         }
@@ -19,13 +19,13 @@
     DeclApiClient.prototype.createRestAction = function(obj, actionName, action, rest) {
       return obj[actionName] = ((function(_this) {
         return function(args, ajaxOptions) {
-          var data, json, param, paramName, regex, type, url, _ref, _ref1;
+          var data, json, param, paramName, ref, ref1, regex, type, url;
           type = rest.type;
           url = rest.url;
           data = {};
-          _ref = action.params;
-          for (paramName in _ref) {
-            param = _ref[paramName];
+          ref = action.params;
+          for (paramName in ref) {
+            param = ref[paramName];
             if (args[paramName] != null) {
               regex = new RegExp("(^|/)(\:" + paramName + ")(/|$)");
               if (regex.test(url)) {
@@ -39,7 +39,7 @@
               }
             }
           }
-          json = ((_ref1 = type.toLowerCase()) === "post" || _ref1 === "patch");
+          json = ((ref1 = type.toLowerCase()) === "post" || ref1 === "patch");
           if (ajaxOptions == null) {
             ajaxOptions = {};
           }
