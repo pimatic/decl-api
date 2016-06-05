@@ -19,8 +19,8 @@
   },
   "license": "GPL",
   "dependencies": {
-    "lodash": "~2.4.1",
-    "bluebird": "~2.3.0"
+    "lodash": "^3.10.1",
+    "bluebird": "^3.3.4"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
