@@ -17,7 +17,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "GPL",
+  "license": "MIT",
   "dependencies": {
     "lodash": "^3.10.1",
     "bluebird": "^3.3.4"
