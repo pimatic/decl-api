@@ -1,11 +1,11 @@
 decl-api
 ========
 
-Declarative api definition for REST and real time APIs. 
+Declarative API definition for REST and real time APIs. 
 
 ## API-Definition
 
-Apis are define as json object:
+An API is defined by a JSON object:
 
 ```coffee
 declapi = require('../index.js')
@@ -63,7 +63,7 @@ api.todo = {
 
 ## Implementation
 
-Your Controller must implement the functions:
+Your Controller must implement the declared functions:
 
 ```coffee
 TodoApp = {
@@ -96,13 +96,13 @@ declapi.createExpressRestApi(app, api.todo, todoApp)
 ## REST-API
 
 ### listTasks
-Returns the task list as json object
+Returns the task list as JSON object
 
     GET /api/tasks 
     RESPONSE {success: true, tasks: [...]}
 
 ### addTask
-Creates a task with the id: someId and returns it as json-object
+Creates a task with the id: someId and returns it as JSON object
 
     POST /api/tasks/someId
     task[description]="some description"
