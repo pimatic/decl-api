@@ -119,7 +119,7 @@ handleParamType = (paramName, param, value) ->
     when "number" then value = handleNumberParam(paramName, param, value)
     when "object"
       unless typeof param is "object"
-        throw new Error("Exprected #{paramName} to be a object, was: #{value}")
+        throw new Error("Expected #{paramName} to be a object, was: #{value}")
       if param.properties?
         for propName, prop of param.properties
           if value[propName]?
@@ -133,7 +133,7 @@ handleParamType = (paramName, param, value) ->
 handleBooleanParam = (paramName, param, value) ->
   if typeof value is "string"
     unless value in ["true", "false"]
-      throw new Error("Exprected #{paramName} to be boolean, was: #{value}")
+      throw new Error("Expected #{paramName} to be boolean, was: #{value}")
     else
       value = (value is "true")
   return value
@@ -142,7 +142,7 @@ handleNumberParam = (paramName, param, value) ->
   if typeof value is "string"
     numValue = parseFloat(value) 
     if isNaN(numValue)
-      throw new Error("Exprected #{paramName} to be boolean, was: #{value}")
+      throw new Error("Expected #{paramName} to be boolean, was: #{value}")
     else
       value = numValue
   return value
