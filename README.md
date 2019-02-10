@@ -3,7 +3,7 @@ decl-api
 
 Declarative api definition for REST and real time APIs. 
 
-##API-Definition
+## API-Definition
 
 Apis are define as json object:
 
@@ -61,7 +61,7 @@ api.todo = {
 }
 ```
 
-##Implementation
+## Implementation
 
 Your Controller must implement the functions:
 
@@ -82,9 +82,9 @@ TodoApp = {
 }
 ```
 
-##Binding
+## Binding
 
-###Express
+### Express
     
 ```coffee
 app = # Your express app
@@ -93,24 +93,24 @@ todoApp = new TodoApp()
 declapi.createExpressRestApi(app, api.todo, todoApp)
 ```
 
-##REST-API
+## REST-API
 
-###listTasks
+### listTasks
 Returns the task list as json object
 
     GET /api/tasks 
     RESPONSE {success: true, tasks: [...]}
 
-###addTask
-Creates a taks with the id: someId and returns it as json-object
+### addTask
+Creates a task with the id: someId and returns it as json-object
 
     POST /api/tasks/someId
     task[description]="some description"
-    taks[done]=false
+    task[done]=false
     RESPONSE
     {success: true, task: {id: "someId", description: "some description", done: false}}
 
-###getTask
+### getTask
 Returns the task with id == someId
 
     GET /api/tasks/someId
