@@ -108,4 +108,4 @@ printHtmlDocs = function() {
   return console.log(declapi.docs().genDocsForActions(api.todo.actions));
 };
 
-printHtmlDocs("test.html");
+printHtmlDocs();
