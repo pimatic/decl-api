@@ -1,4 +1,4 @@
-var assert, declapi, genDocForParamDescription, genDocsForAction, genDocsForActions, genDocsForParam, genDocsForParams, genRestDocs, glueConcat, glueList, glueType, printAction, printParam, printParamlist, printType, _;
+var _, assert, declapi, genDocForParamDescription, genDocsForAction, genDocsForActions, genDocsForParam, genDocsForParams, genRestDocs, glueConcat, glueList, glueType, printAction, printParam, printParamlist, printType;
 
 assert = require('assert');
 
@@ -10,23 +10,23 @@ genDocsForActions = function(actions) {
   var a, n;
   assert(typeof actions === "object");
   return "<div>\n  " + (glueConcat((function() {
-    var _results;
-    _results = [];
+    var results;
+    results = [];
     for (n in actions) {
       a = actions[n];
-      _results.push(genDocsForAction(n, a));
+      results.push(genDocsForAction(n, a));
     }
-    return _results;
+    return results;
   })())) + "\n</div>";
 };
 
 printAction = function(actionName, action, result) {
-  return ("" + actionName + "(" + (printParamlist(action)) + ")") + (result != null ? ' -> ' + printParam(result.name, result.info) : void 0);
+  return (actionName + "(" + (printParamlist(action)) + ")") + (result != null ? ' -> ' + printParam(result.name, result.info) : void 0);
 };
 
 glueList = function(list) {
   return _.reduce(list, function(l, r) {
-    return "" + l + ", " + r;
+    return l + ", " + r;
   });
 };
 
@@ -38,7 +38,7 @@ glueConcat = function(list) {
 
 glueType = function(list) {
   return _.reduce(list, function(l, r) {
-    return "" + l + "|" + r;
+    return l + "|" + r;
   });
 };
 
@@ -48,20 +48,20 @@ printParamlist = function(action) {
     return '';
   }
   return "" + (glueList((function() {
-    var _ref, _results;
-    _ref = action.params;
-    _results = [];
-    for (name in _ref) {
-      p = _ref[name];
-      _results.push(printParam(name, p));
+    var ref, results;
+    ref = action.params;
+    results = [];
+    for (name in ref) {
+      p = ref[name];
+      results.push(printParam(name, p));
     }
-    return _results;
+    return results;
   })()));
 };
 
 printParam = function(name, param) {
   var str;
-  str = "" + name + " : " + (printType(param));
+  str = name + " : " + (printType(param));
   if (param.optional) {
     str = "[" + str + "]";
   }
@@ -101,13 +101,13 @@ genDocsForParams = function(params) {
     return '';
   }
   return "<ul>\n  " + (glueConcat((function() {
-    var _results;
-    _results = [];
+    var results;
+    results = [];
     for (n in params) {
       p = params[n];
-      _results.push(genDocsForParam(n, p));
+      results.push(genDocsForParam(n, p));
     }
-    return _results;
+    return results;
   })())) + "\n</ul>";
 };
 
@@ -121,23 +121,23 @@ genDocsForParam = function(paramName, param) {
     info.push('optional');
   }
   return "<li class=\"api-param\">\n  <code class=\"api-param-name\">" + paramName + "</code>\n  <span class=\"api-param-description\">\n    " + (info.length > 0 ? '(' + glueList(info) + ')' : '') + "\n    " + (genDocForParamDescription(param)) + "\n  </span>\n  " + (param.properties != null ? '<ul class="action-param-properties">' + glueConcat((function() {
-    var _ref, _results;
-    _ref = param.properties;
-    _results = [];
-    for (n in _ref) {
-      p = _ref[n];
-      _results.push(genDocsForParam(n, p));
+    var ref, results;
+    ref = param.properties;
+    results = [];
+    for (n in ref) {
+      p = ref[n];
+      results.push(genDocsForParam(n, p));
     }
-    return _results;
+    return results;
   })()) + '</ul>' : '') + "\n  " + (param.items != null ? '<ul class="action-param-items">' + glueConcat((function() {
-    var _ref, _results;
-    _ref = param.items;
-    _results = [];
-    for (n in _ref) {
-      p = _ref[n];
-      _results.push(genDocsForParam(n, p));
+    var ref, results;
+    ref = param.items;
+    results = [];
+    for (n in ref) {
+      p = ref[n];
+      results.push(genDocsForParam(n, p));
     }
-    return _results;
+    return results;
   })()) + '</ul>' : '') + "\n</li>";
 };
 

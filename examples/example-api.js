@@ -84,12 +84,12 @@ TodoApp = {
     return this.tasks;
   },
   getTask: function(taskId) {
-    var _i, _len, _ref;
-    _ref = this.tasks;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      t = _ref[_i];
+    var i, len, ref;
+    ref = this.tasks;
+    for (i = 0, len = ref.length; i < len; i++) {
+      t = ref[i];
       if (t.id === taskId) {
-        return task;
+        return t;
       }
     }
     return null;
@@ -108,4 +108,4 @@ printHtmlDocs = function() {
   return console.log(declapi.docs().genDocsForActions(api.todo.actions));
 };
 
-printHtmlDocs();
+printHtmlDocs("test.html");
