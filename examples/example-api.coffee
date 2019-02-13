@@ -56,7 +56,7 @@ TodoApp = {
   getTask: (taskId) -> 
     for t in @tasks
       if t.id is taskId
-        return task
+        return t
     return null
   addTask: (taskId, task) ->
     unless task.done then task.done = no
