@@ -25,7 +25,6 @@ module.exports = (grunt) ->
       test:
         options: {
           reporter: 'spec',
-          captureFile: 'results.txt',
           quiet: false,
           clearRequireCache: false,
           noFail: false
