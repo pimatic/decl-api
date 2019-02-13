@@ -14,15 +14,28 @@ module.exports = (grunt) ->
           'index.js': 'index.coffee'
           'docs.js': 'docs.coffee'
           'examples/example-api.js': 'examples/example-api.coffee'
+          'test/test-api.js': 'test/test-api.coffee'
         }
       client:
         files: {
           'clients/decl-api-client.js': 'clients/decl-api-client.coffee'
         }
 
+    mochaTest:
+      test:
+        options: {
+          reporter: 'spec',
+          captureFile: 'results.txt',
+          quiet: false,
+          clearRequireCache: false,
+          noFail: false
+        },
+        src: ['test/**/*.js']
+
   )
   # Load external Grunt task plugins.
   grunt.loadNpmTasks 'grunt-contrib-coffee'
- 
+  grunt.loadNpmTasks 'grunt-mocha-test'
+
   # Default task.
-  grunt.registerTask "default", ["coffee"]
+  grunt.registerTask "default", ["coffee", "mochaTest"]
