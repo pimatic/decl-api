@@ -1,3 +1,4 @@
+assert = require('assert');
 declapi = require('../index.js')
 t = declapi.types
 
@@ -12,7 +13,7 @@ api.todo = {
       params: {}
       result:
         tasks:
-          type: t.array 
+          type: t.array
     getTask:
       description: "Get a task by id"
       rest:
@@ -53,7 +54,7 @@ api.todo = {
 TodoApp = {
   tasks: []
   listTasks: -> @tasks
-  getTask: (taskId) -> 
+  getTask: (taskId) ->
     for t in @tasks
       if t.id is taskId
         return t
@@ -65,10 +66,20 @@ TodoApp = {
     return task
 }
 
+describe 'Sample API Test', () =>
 
-printHtmlDocs = () ->
-  console.log(
-    declapi.docs().genDocsForActions(api.todo.actions)
-  )
+  beforeEach () ->
+    TodoApp.tasks = []
+    TodoApp.addTask 1, { description: "dummy task", done: false}
 
-printHtmlDocs()
+  describe 'functions', () ->
+    it 'should add a task', () ->
+      assert.equal TodoApp.tasks.length, 1
+
+    it 'should get a task', () ->
+      assert TodoApp.getTask(1) isnt null
+      assert TodoApp.getTask(0) is null
+
+
+    it 'should list tasks', () ->
+      assert TodoApp.listTasks().length is 1

@@ -1,5 +1,5 @@
-var Promise, assert, callActionFromReq, callActionFromReqAndRespond, callActionFromSocket, callActionFromSocketAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult, _, _socketBindings,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+var Promise, _, _socketBindings, assert, callActionFromReq, callActionFromReqAndRespond, callActionFromSocket, callActionFromSocketAndRespond, checkConfig, checkConfigEntry, createExpressRestApi, createSocketIoApi, docs, enhanceJsonSchemaWithDefaults, getConfigDefaults, handleBooleanParam, handleNumberParam, handleParamType, normalizeAction, normalizeActions, normalizeParam, normalizeParams, normalizeType, path, sendErrorResponse, sendResponse, sendSuccessResponse, serveClient, stringifyApi, toJson, types, wrapActionResult,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 assert = require('assert');
 
@@ -21,7 +21,7 @@ types = {
 types.any = [types.number, types.boolean, types.string, types.array, types.date, types.object];
 
 normalizeType = function(type) {
-  assert(__indexOf.call(_.values(types), type) >= 0);
+  assert(indexOf.call(_.values(types), type) >= 0);
   return type;
 };
 
@@ -67,7 +67,7 @@ sendResponse = function(res, statusCode, data) {
   res.header("Cache-Control", "no-cache, no-store, must-revalidate");
   res.header("Pragma", "no-cache");
   res.header("Expires", 0);
-  return res.send(statusCode, data);
+  return res.status(statusCode).send(data);
 };
 
 sendSuccessResponse = function(res, data) {
@@ -78,9 +78,11 @@ sendSuccessResponse = function(res, data) {
   return sendResponse(res, 200, data);
 };
 
-sendErrorResponse = function(res, error) {
-  var message, statusCode;
-  statusCode = 400;
+sendErrorResponse = function(res, error, statusCode) {
+  var message;
+  if (statusCode == null) {
+    statusCode = 400;
+  }
   message = null;
   if (error instanceof Error) {
     message = error.message;
@@ -123,7 +125,7 @@ checkConfigEntry = function(name, entry, val) {
 };
 
 checkConfig = function(def, config, warnings) {
-  var entry, name, _results;
+  var entry, name, results;
   if (warnings == null) {
     warnings = [];
   }
@@ -135,15 +137,15 @@ checkConfig = function(def, config, warnings) {
       throw new Error("Missing config entry " + name + ".");
     }
   }
-  _results = [];
+  results = [];
   for (name in config) {
     if (def[name] == null) {
-      _results.push(warnings.push("Unknown config entry with name " + name + "."));
+      results.push(warnings.push("Unknown config entry with name " + name + "."));
     } else {
-      _results.push(void 0);
+      results.push(void 0);
     }
   }
-  return _results;
+  return results;
 };
 
 getConfigDefaults = function(def, includeObjects) {
@@ -164,13 +166,13 @@ getConfigDefaults = function(def, includeObjects) {
 };
 
 enhanceJsonSchemaWithDefaults = function(def, config) {
-  var defaults, entry, name, _ref;
+  var defaults, entry, name, ref;
   assert(def.type === "object", "Expected def to be a config schema with type \"object\"");
   assert(typeof def.properties === "object");
   defaults = getConfigDefaults(def.properties, false);
-  _ref = def.properties;
-  for (name in _ref) {
-    entry = _ref[name];
+  ref = def.properties;
+  for (name in ref) {
+    entry = ref[name];
     if (entry.type === "object" && (entry.properties != null)) {
       config[name] = enhanceJsonSchemaWithDefaults(entry, config[name] || {});
     } else if ((config[name] == null) && (defaults[name] != null) && Array.isArray(defaults[name])) {
@@ -182,7 +184,7 @@ enhanceJsonSchemaWithDefaults = function(def, config) {
 };
 
 handleParamType = function(paramName, param, value) {
-  var prop, propName, _ref;
+  var prop, propName, ref;
   switch (param.type) {
     case "boolean":
       value = handleBooleanParam(paramName, param, value);
@@ -192,12 +194,12 @@ handleParamType = function(paramName, param, value) {
       break;
     case "object":
       if (typeof param !== "object") {
-        throw new Error("Exprected " + paramName + " to be a object, was: " + value);
+        throw new Error("Expected " + paramName + " to be a object, was: " + value);
       }
       if (param.properties != null) {
-        _ref = param.properties;
-        for (propName in _ref) {
-          prop = _ref[propName];
+        ref = param.properties;
+        for (propName in ref) {
+          prop = ref[propName];
           if (value[propName] != null) {
             value[propName] = handleParamType(propName, prop, value[propName]);
           } else {
@@ -214,7 +216,7 @@ handleParamType = function(paramName, param, value) {
 handleBooleanParam = function(paramName, param, value) {
   if (typeof value === "string") {
     if (value !== "true" && value !== "false") {
-      throw new Error("Exprected " + paramName + " to be boolean, was: " + value);
+      throw new Error("Expected " + paramName + " to be boolean, was: " + value);
     } else {
       value = value === "true";
     }
@@ -227,7 +229,7 @@ handleNumberParam = function(paramName, param, value) {
   if (typeof value === "string") {
     numValue = parseFloat(value);
     if (isNaN(numValue)) {
-      throw new Error("Exprected " + paramName + " to be boolean, was: " + value);
+      throw new Error("Expected " + paramName + " to be boolean, was: " + value);
     } else {
       value = numValue;
     }
@@ -236,11 +238,11 @@ handleNumberParam = function(paramName, param, value) {
 };
 
 callActionFromReq = function(actionName, action, binding, req, res) {
-  var handler, p, paramName, paramValue, params, _ref, _ref1;
+  var handler, p, paramName, paramValue, params, ref, ref1;
   params = [];
-  _ref = action.params;
-  for (paramName in _ref) {
-    p = _ref[paramName];
+  ref = action.params;
+  for (paramName in ref) {
+    p = ref[paramName];
     paramValue = null;
     if (req.params[paramName] != null) {
       paramValue = req.params[paramName];
@@ -255,7 +257,7 @@ callActionFromReq = function(actionName, action, binding, req, res) {
       params.push(handleParamType(paramName, p, paramValue));
     }
   }
-  handler = (_ref1 = action.rest) != null ? _ref1.handler : void 0;
+  handler = (ref1 = action.rest) != null ? ref1.handler : void 0;
   if (handler == null) {
     assert(typeof binding[actionName] === "function");
     return Promise["try"]((function(_this) {
@@ -274,12 +276,12 @@ callActionFromReq = function(actionName, action, binding, req, res) {
 };
 
 callActionFromSocket = function(binding, action, call) {
-  var actionName, handler, p, paramName, paramValue, params, _ref, _ref1;
+  var actionName, handler, p, paramName, paramValue, params, ref, ref1;
   actionName = call.action;
   params = [];
-  _ref = action.params;
-  for (paramName in _ref) {
-    p = _ref[paramName];
+  ref = action.params;
+  for (paramName in ref) {
+    p = ref[paramName];
     paramValue = null;
     if (call.params[paramName] != null) {
       paramValue = call.params[paramName];
@@ -290,7 +292,7 @@ callActionFromSocket = function(binding, action, call) {
       params.push(handleParamType(paramName, p, paramValue));
     }
   }
-  handler = (_ref1 = action.socket) != null ? _ref1.handler : void 0;
+  handler = (ref1 = action.socket) != null ? ref1.handler : void 0;
   if (handler == null) {
     assert(typeof binding[actionName] === "function");
     return Promise["try"]((function(_this) {
@@ -312,13 +314,13 @@ toJson = function(result) {
   var e, i;
   if (Array.isArray(result)) {
     return (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (i = _i = 0, _len = result.length; _i < _len; i = ++_i) {
+      var j, len, results;
+      results = [];
+      for (i = j = 0, len = result.length; j < len; i = ++j) {
         e = result[i];
-        _results.push(toJson(e));
+        results.push(toJson(e));
       }
-      return _results;
+      return results;
     })();
   } else if (typeof result === "object") {
     if ((result != null ? result.toJson : void 0) != null) {
@@ -333,12 +335,12 @@ wrapActionResult = function(action, result) {
   assert(typeof action === "object");
   if (action.result) {
     resultName = ((function() {
-      var _results;
-      _results = [];
+      var results;
+      results = [];
       for (key in action.result) {
-        _results.push(key);
+        results.push(key);
       }
-      return _results;
+      return results;
     })())[0];
     if (action.result[resultName].toJson != null) {
       result = toJson(result);
@@ -360,12 +362,15 @@ callActionFromReqAndRespond = function(actionName, action, binding, req, res, on
       return callActionFromReq(actionName, action, binding, req);
     };
   })(this)).then(function(result) {
-    var e, response;
+    var e, error1, response;
     response = null;
     try {
+      if ((action.result != null) && (result == null)) {
+        return sendErrorResponse(res, "Not Found", 404);
+      }
       response = wrapActionResult(action, result);
-    } catch (_error) {
-      e = _error;
+    } catch (error1) {
+      e = error1;
       throw new Error("Error on handling the result of " + actionName + ": " + e.message);
     }
     return sendSuccessResponse(res, response);
@@ -388,12 +393,12 @@ callActionFromSocketAndRespond = function(socket, binding, action, call, checkPe
     result = callActionFromSocket(binding, action, call);
     return Promise.resolve(result).then((function(_this) {
       return function(result) {
-        var e, response;
+        var e, error1, response;
         response = null;
         try {
           response = wrapActionResult(action, result);
-        } catch (_error) {
-          e = _error;
+        } catch (error1) {
+          e = error1;
           throw new Error("Error on handling the result of " + call.action + ": " + e.message);
         }
         return socket.emit('callResult', {
@@ -424,11 +429,11 @@ callActionFromSocketAndRespond = function(socket, binding, action, call, checkPe
 };
 
 createExpressRestApi = function(app, actions, binding, onError) {
-  var action, actionName, _fn;
+  var action, actionName, fn;
   if (onError == null) {
     onError = null;
   }
-  _fn = (function(_this) {
+  fn = (function(_this) {
     return function(actionName, action) {
       var type, url;
       if (action.rest != null) {
@@ -442,7 +447,7 @@ createExpressRestApi = function(app, actions, binding, onError) {
   })(this);
   for (actionName in actions) {
     action = actions[actionName];
-    _fn(actionName, action);
+    fn(actionName, action);
   }
 };
 
@@ -457,12 +462,12 @@ createSocketIoApi = (function(_this) {
       checkPermissions = null;
     }
     return socket.on('call', function(call) {
-      var actions, binding, foundBinding, _fn, _i, _len, _ref;
+      var actions, binding, fn, foundBinding, j, len, ref;
       assert((call.action != null) && typeof call.action === "string");
       assert((call.params != null) && typeof call.params === "object");
       assert(call.id != null ? typeof call.id === "string" || typeof call.id === "number" : true);
       foundBinding = false;
-      _fn = (function(_this) {
+      fn = (function(_this) {
         return function(actions, binding) {
           var action;
           action = actions[call.action];
@@ -472,9 +477,9 @@ createSocketIoApi = (function(_this) {
           }
         };
       })(this);
-      for (_i = 0, _len = actionsAndBindings.length; _i < _len; _i++) {
-        _ref = actionsAndBindings[_i], actions = _ref[0], binding = _ref[1];
-        _fn(actions, binding);
+      for (j = 0, len = actionsAndBindings.length; j < len; j++) {
+        ref = actionsAndBindings[j], actions = ref[0], binding = ref[1];
+        fn(actions, binding);
       }
       if (!foundBinding) {
         if (onError != null) {
@@ -486,7 +491,7 @@ createSocketIoApi = (function(_this) {
 })(this);
 
 serveClient = function(req, res) {
-  return res.sendfile(path.resolve(__dirname, 'clients/decl-api-client.js'));
+  return res.sendFile(path.resolve(__dirname, 'clients/decl-api-client.js'));
 };
 
 stringifyApi = function(api) {

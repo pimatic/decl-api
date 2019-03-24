@@ -14,10 +14,10 @@ class DeclApiClient
       data = {}
       for paramName, param of action.params
         if args[paramName]?
-          # test if its an url paramter
+          # test if its an url parameter
           regex = new RegExp("(^|/)(\:#{paramName})(/|$)")
           if regex.test(url)
-            # ":paramName" can't be replaced directly, because parametername could
+            # ":paramName" can't be replaced directly, because parameter name could
             # include regexp special chars, so replace by "!!!" and then by value
             url = url.replace(regex, '$1!!!$3').replace('!!!', args[paramName])
           else
